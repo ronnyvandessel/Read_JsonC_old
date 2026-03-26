@@ -1,36 +1,108 @@
-# This is a basic workflow to help you get started with Actions
+name: Use JSONC Parameters
 
-name: CI
+ 
 
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
 
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+ 
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+
+  read-jsonc:
+
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
+ 
+
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+      - name: Checkout repo
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      uses: actions/checkout@v4
+
+ 
+
+      - name: Load and clean JSONC
+
+        id: clean
+
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+
+          echo "Stripping comments from JSONC..."
+
+ 
+
+          # Remove // comments and trailing inline comments
+
+          CLEAN=$(sed 's,//.*$,,' .github/parameters.jsonc)
+
+ 
+
+          # Remove /* */ block comments (multi-line)
+
+          CLEAN=$(echo "$CLEAN" | sed '/\/\*/,/\*\//d')
+
+ 
+
+          echo "clean_json=$CLEAN" >> $GITHUB_OUTPUT
+
+ 
+
+      - name: Validate JSON
+
+        run: |
+
+          echo "Validating JSON..."
+
+          echo '${{ steps.clean.outputs.clean_json }}' | jq .
+
+          echo "JSON is valid!"
+
+ 
+
+      - name: Extract values
+
+        id: params
+
+        run: |
+
+          JSON='${{ steps.clean.outputs.clean_json }}'
+
+          echo "displayname=$(echo $JSON | jq -r '.Displayname[0]')" >> $GITHUB_OUTPUT
+
+          echo "r0=$(echo $JSON | jq -c '.Targets_R0')" >> $GITHUB_OUTPUT
+
+          echo "r1=$(echo $JSON | jq -c '.Targets_R1')" >> $GITHUB_OUTPUT
+
+          echo "r2=$(echo $JSON | jq -c '.Targets_R2')" >> $GITHUB_OUTPUT
+
+ 
+
+      - name: Print extracted values
+
+        run: |
+
+          echo "Displayname: ${{ steps.params.outputs.displayname }}"
+
+          echo "R0: ${{ steps.params.outputs.r0 }}"
+
+          echo "R1: ${{ steps.params.outputs.r1 }}"
+
+          echo "R2: ${{ steps.params.outputs.r2 }}"
+
+ 
+
+      - name: Loop through R0 targets
+
+        run: |
+
+          echo "Looping Targets_R0..."
+
+          for target in $(echo '${{ steps.params.outputs.r0 }}' | jq -r '.[]'); do
+
+            echo "Processing: $target"
+
+          done
+
+ 
+
