@@ -1,0 +1,44 @@
+
+{
+
+    // De weergavenaam van de yaml
+
+    "Displayname": [
+
+      "<name>"
+
+    ],
+
+ 
+
+    // Targets voor R0
+
+    "Targets_R0": [
+
+      "SOFV000001",
+
+      "SOFV000007"
+
+    ],
+
+ 
+
+    // Targets voor R1
+
+    "Targets_R1": [
+
+      "SOFV000003"
+
+    ],
+
+ 
+
+    // Targets voor R2
+
+    "Targets_R2": [
+
+      "SOFV000001"
+
+    ]
+
+  }
