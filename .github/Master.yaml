@@ -1,9 +1,9 @@
 name: Parse JSONC
+
 on:
   workflow_dispatch:
 
 jobs:
-
   parse:
     runs-on: windows-latest
     steps:
