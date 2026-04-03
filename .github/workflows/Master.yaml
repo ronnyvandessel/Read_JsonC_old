@@ -31,6 +31,7 @@ jobs:
           write-host "Display Name: "  $config.Displayname
           Write-Host "Targets R0:"
           $config.Targets_R0
+          Write-Host "Targets R1:"
           $config.Targets_R1
          
 
