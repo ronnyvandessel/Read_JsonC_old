@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Parse config
-        uses: RonnyVanDessel/composite_test_pws@v1
+        uses: RonnyVanDessel/composite_test_pws@v1.1
         with:
           path: Params.jsonc
 
