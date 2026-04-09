@@ -1,32 +1,17 @@
-
-
-/* zo wordt de JSON opgebouwd
-   een voorbeeld voor ring0 met meerdere targets:
-   
-  Targets voor R0
-    "Targets_R0": [
-      "SOFV000001",
-      "SOFV000007"
-    ],  
-*/
 {
-    "Displayname": [
-      "<name>"
-    ],
-
-     // Targets voor R0
-    "Targets_R0": [
-      "SOFV000001",
-      "SOFV000007"
-    ],
-
-     // Targets voor R1
-    "Targets_R1": [
-      "SOFV000003"
-    ],
- 
-    // Targets voor R2
-    "Targets_R2": [
-      "SOFV000001"
-    ]
-  }
+  "Displayname": [
+    "<name>"
+  ],
+  "Targets_R0": [
+    "SOFV000001",
+    "SOFV000007",
+    "SOFV000010",
+    "SOFV000011"
+  ],
+  "Targets_R1": [
+    "SOFV000003"
+  ],
+  "Targets_R2": [
+    "SOFV000001"
+  ]
+}
