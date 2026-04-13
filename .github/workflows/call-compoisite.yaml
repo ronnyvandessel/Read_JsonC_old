@@ -1,11 +1,10 @@
 name: Composite action
 
 on:
-  
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
-  
+
 permissions:
   contents: write
 
@@ -20,7 +19,6 @@ jobs:
       - name: DNS test
         shell: pwsh
         run: |
-               
           Write-Host "Runner OS:"
           systeminfo | Select-String "OS Name","OS Version"
 
@@ -31,15 +29,17 @@ jobs:
           Test-NetConnection api.winget.microsoft.com -Port 443
 
           Write-Host "`nProxy environment variables:"
-          Get-ChildItem Env:HTTP_PROXY, Env:HTTPS_PROXY, Env:NO_PROXY
+          Get-ChildItem Env: | Where-Object Name -match 'PROXY'
 
       - name: Parse config
         id: parse
         uses: RonnyVanDessel/composite_test_pws@main
         with:
-          #path: Params.jsonc
           dscfile: "DotNET_DSC 1_v4.winget"
+
       - name: Result
-        run: echo "Targets = ${{ steps.parse.outputs.targets_r0 }}"
-             echo "Aantal Lijnen = ${{ steps.parse.outputs.lines_count }}"
-             
+        shell: pwsh
+        run: |
+          echo "Targets = ${{ steps.parse.outputs.targets_r0 }}"
+          echo "Aantal Lijnen = ${{ steps.parse.outputs.lines_count }}"
+``
