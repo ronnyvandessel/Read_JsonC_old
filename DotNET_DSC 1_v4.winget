@@ -1,0 +1,462 @@
+# yaml-language-server: $schema=https://aka.ms/configuration-dsc-schema/0.2
+properties:
+  resources:
+  ########################################################################
+  # Windows Optional Features: Enable NetFx3
+  ########################################################################
+#    - resource: PSDscResources/WindowsOptionalFeature   #doesn't work, 'class not registered' error, https://github.com/microsoft/winget-cli/issues/4264#issuecomment-1992369583
+#      directives:
+#        description: Enable NetFx3
+#      settings:
+#        Ensure: present # [Present, Absent]
+#        Name: NetFx3
+    - resource: PSDscResources/Script
+      id: NetFx3
+      directives:
+        description: Enable optional Windows feature .NET Framework 3.5
+      settings:
+        GetScript: |
+          return $true
+        TestScript: |
+          $output = dism.exe /online /get-featureinfo /featurename:NetFx3
+          if ($output -match 'State : Enabled') {return $true}
+          else {return $false}
+        SetScript: |
+          dism.exe /online /enable-feature /featurename:NetFx3 /all /norestart
+  ########################################################################
+  # Windows Optional Features: Enable IIS
+  ########################################################################
+    - resource: PSDscResources/Script
+      id: IIS
+      dependsOn:
+         - NetFx3
+      directives:
+        description: Enable IIS
+      settings:
+        GetScript: |
+          return $true
+        TestScript: |
+          $output = dism.exe /online /get-featureinfo /featurename:Web-Server
+          if ($output -match 'State : Enabled') {return $true}
+          else {return $false}
+        SetScript: |
+          dism.exe /online /enable-feature /featurename:Web-Server /all /norestart
+  ########################################################################
+  # Windows Settings: Enable Developer Mode
+  ########################################################################
+  #  - resource: Microsoft.Windows.Developer/DeveloperMode
+  #    directives:
+  #      description: Enable Developer Mode
+  #      allowPrerelease: true
+  #    settings:
+  #      Ensure: Present
+  ########################################################################
+  # Winget: Install .NET Framework 
+  ########################################################################
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: .NETframework
+      directives:
+        description: Install .NET Framework 
+      settings:
+        id: Microsoft.DotNet.Framework.DeveloperPack_4
+        source: winget
+  ########################################################################
+  # Powershell: Source Code Signing with KBC Key
+  ########################################################################
+    - resource: PSDscResources/Script
+      id: SourceCodeSigning
+      dependsOn:
+         - .NETframework
+      directives:
+        description: Source Code Signing with KBC Key
+      settings:
+        GetScript: |
+          # not needed
+        TestScript: |
+          $result = @()
+          Get-ChildItem "C:\Program Files (x86)\Microsoft SDKs\Windows\v*.*\bin\NETFX *.*.* Tools\sn.exe" | ForEach-Object {$result += & $_ -Vl}
+          if ($result -notcontains "No verification entries registered") {return $true} else {return $false}
+        SetScript: |
+          Get-ChildItem "C:\Program Files (x86)\Microsoft SDKs\Windows\v*.*\bin\NETFX *.*.* Tools\sn.exe" | ForEach-Object {& $_ -Vr *,edc51795076b6be9}
+  ########################################################################
+  # Winget: Install NuGet
+  ########################################################################
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: NuGet
+      directives:
+        description: Install NuGet
+      settings:
+        id: Microsoft.NuGet
+        source: winget
+  ########################################################################
+  # Winget: Install Node.js
+  ########################################################################
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: NodeJs
+      directives:
+        description: Install Node.js
+      settings:
+        id: OpenJS.NodeJS
+        source: winget
+  ########################################################################
+  # Winget: Install Git
+  ########################################################################
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: Git
+      directives:
+        description: Install Git
+      settings:
+        id: Git.Git
+        source: winget
+  ########################################################################
+  # Winget: Install Microsoft Azure Storage Explorer
+  ########################################################################
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: AzureStorageExplorer
+      directives:
+        description: Install Microsoft Azure Storage Explorer
+      settings:
+        id: Microsoft.Azure.StorageExplorer
+        source: winget
+  ########################################################################
+  # Winget: Install Microsoft .NET SDK 9.0
+  ########################################################################
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: Microsoft.NETSDK9.0
+      directives:
+        description: Install Microsoft .NET SDK 9.0
+      settings:
+        id: Microsoft.DotNet.SDK.9
+        source: winget
+  ########################################################################
+  # Winget: Install Visual Studio Enterprise 2022
+  ########################################################################
+  #  - resource: Microsoft.WinGet.DSC/WinGetPackage
+  #    id: VisualStudio2022
+  #    directives:
+  #      description: Install Visual Studio Enterprise 2022
+  #    settings:
+  #      id: Microsoft.VisualStudio.2022.Enterprise
+  #      source: winget
+  ########################################################################
+  # Winget: Install Sysinternals Suite
+  ########################################################################
+  #  - resource: Microsoft.WinGet.DSC/WinGetPackage
+  #    id: sysinternals
+  #    directives:
+  #      description: Install Sysinternals Suite
+  #    settings:
+  #      id: 9P7KNL5RWT25
+  #      source: msstore
+  ########################################################################
+  # Winget: Install VS-Code & extensions
+  ########################################################################
+  #  - resource: Microsoft.WinGet.DSC/WinGetPackage
+  #    id: VisualStudioCode
+  #    directives:
+  #      description: Install Microsoft Visual Studio Code
+  #    settings:
+  #      id: XP9KHM4BK9FZ7Q
+  #      source: msstore
+    # when adding VSCode extensions: don't forget to also add them in the section 'Registry: VSCode Extension whitelisting'
+  #  - resource: Microsoft.VSCode.Dsc/VSCodeExtension
+  #    id: vue.volar
+  #    dependsOn:
+  #       - VisualStudioCode
+  #    directives:
+  #      description: Install vue.volar extension for VSCode
+  #      allowPrerelease: true
+  #    settings:
+  #      Name: vue.volar
+  #      Exist: true
+  #  - resource: Microsoft.VSCode.Dsc/VSCodeExtension
+  #    id: dbaeumer.vscode-eslint
+  #    dependsOn:
+  #      - VisualStudioCode
+  #    directives:
+  #      description: Install dbaeumer.vscode-eslint extension for VSCode
+  #      allowPrerelease: true
+  #    settings:
+  #      Name: dbaeumer.vscode-eslint
+  #      Exist: true
+  #  - resource: Microsoft.VSCode.Dsc/VSCodeExtension
+  #    id: esbenp.prettier-vscode
+  #    dependsOn:
+  #      - VisualStudioCode
+  #    directives:
+  #      description: Install esbenp.prettier-vscode extension for VSCode
+  #      allowPrerelease: true
+  #    settings:
+  #      Name: esbenp.prettier-vscode
+  #      Exist: true
+  #  - resource: Microsoft.VSCode.Dsc/VSCodeExtension
+  #    id: Lokalise.i18n-ally
+  #    dependsOn:
+  #      - VisualStudioCode
+  #    directives:
+  #      description: Install Lokalise.i18n-ally extension for VSCode
+  #      allowPrerelease: true
+  #    settings:
+  #      Name: Lokalise.i18n-ally
+  #      Exist: true
+  #  - resource: Microsoft.VSCode.Dsc/VSCodeExtension
+  #    id: octref.vetur
+  #    dependsOn:
+  #      - VisualStudioCode
+  #    directives:
+  #      description: Install octref.vetur extension for VSCode
+  #      allowPrerelease: true
+  #    settings:
+  #      Name: octref.vetur
+  #      Exist: true
+  ########################################################################
+  # Registry: VSCode Extension whitelisting
+  ########################################################################
+    - resource: "xPSDesiredStateConfiguration/xRegistry"
+      directives:
+        description: "enforced whitelisting of VSCode extensions"
+      settings:
+        Key: "HKLM:\\Software\\Policies\\Microsoft\\VSCode"
+        ValueName: "AllowedExtensions"
+        ValueData: ['vue.volar','dbaeumer.vscode-eslint','esbenp.prettier-vscode','Lokalise.i18n-ally','octref.vetur']
+        ValueType: "MultiString"    #String | Binary | DWord | QWord | MultiString | ExpandString 
+        Force: true
+        Ensure: "Present"
+  ########################################################################
+  # Winget: Install Atlassion Sourcetree
+  ########################################################################
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: Sourcetree
+      directives:
+        description: Install Atlassian Sourcetree
+      settings:
+        id: Atlassian.Sourcetree
+        source: winget
+  ########################################################################
+  # Winget: Install NVM for Windows
+  ########################################################################
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: NVM4Windows
+      directives:
+        description: Install NVM for Windows
+      settings:
+        id: CoreyButler.NVMforWindows
+        source: winget
+  ########################################################################
+  # Winget: Install NotePad++
+  ########################################################################
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: Notepad++
+      directives:
+        description: Install NotePad++
+      settings:
+        id: Notepad++.Notepad++
+        source: winget
+  ########################################################################
+  # Winget: Install Microsoft SQL Server Management Studio
+  ########################################################################
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: SQLServerManagementStudio
+      directives:
+        description: Install Microsoft SQL Server Management Studio
+      settings:
+        id: Microsoft.SQLServerManagementStudio
+        source: winget
+  ########################################################################
+  # Winget: Install NSwagStudio
+  ########################################################################
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: NSwagStudio
+      directives:
+        description: Install The OpenAPI/Swagger API toolchain for .NET and TypeScript
+      settings:
+        id: RicoSuter.NSwagStudio
+        source: winget
+  ########################################################################
+  # Winget: Install Chocolatey package manager
+  ########################################################################
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: choco
+      directives:
+        description: Install Chocolatey package manager
+      settings:
+        id: Chocolatey.Chocolatey
+        source: winget
+  ########################################################################
+  # Choco: Install Oracle SQL Developer
+  ########################################################################
+    - resource: Chocolatey/ChocolateyPackage
+      id: ChocoOracleSQLDeveloper
+      dependsOn:
+        - choco
+      directives:
+        description: Install Oracle SQL Developer
+      settings:
+        Name: oracle-sql-developer
+        Ensure: Present
+  ########################################################################
+  # Choco: Install DotPeek
+  ########################################################################
+    - resource: Chocolatey/ChocolateyPackage
+      id: DotPeek
+      dependsOn:
+        - choco
+      directives:
+        description: Install DotPeek
+      settings:
+        Ensure: Present
+        Name: dotpeek
+        ChocolateyOptions:
+          packageParameters: "/PerMachine"
+  ########################################################################
+  # Choco: Install DotPeek
+  ########################################################################
+    - resource: Chocolatey/ChocolateyPackage
+      id: ReSharper
+      dependsOn:
+        - choco
+      directives:
+        description: Install ReSharper
+      settings:
+        Ensure: Present
+        Name: resharper
+        ChocolateyOptions:
+          packageParameters: "/PerMachine"
+  ########################################################################
+  # Winget: Install DotTrace
+  ########################################################################
+    - resource: Chocolatey/ChocolateyPackage
+      id: DotTrace
+      dependsOn:
+        - choco
+      directives:
+        description: Install JetBrains dotTrace
+      settings:
+        Ensure: Present
+        Name: dottrace
+        ChocolateyOptions:
+          packageParameters: "/PerMachine"
+  ########################################################################
+  # Choco: Install sqlcmd utility
+  ########################################################################
+    - resource: Chocolatey/ChocolateyPackage
+      id: sqlcmd
+      dependsOn:
+        - choco
+      directives:
+        description: Install sqlcmd utility
+      settings:
+        Ensure: Present
+        Name: sqlcmd
+  ########################################################################
+  # Powershell: Create c:\DEVS\DOTNET\scratch
+  ########################################################################
+    - resource: PSDscResources/Script
+      id: CreateDEVSfolder
+      directives:
+        description: Creates c:\DEVS folder structure
+      settings:
+        GetScript: |
+          # not needed
+        TestScript: |
+          If(Test-Path -Path c:\DEVS\DOTNET\scratch){return $true} else {return $false}
+        SetScript: |
+          New-Item -Path c:\DEVS\DOTNET\scratch -ItemType Directory -Force
+  ########################################################################
+  # Powershell: Download & Install Visual Studio extension TelerikInc.TelerikASPNETMVCVSExtensions
+  ########################################################################
+  #  - resource: PSDscResources/Script
+  #    id: TelerikInc.TelerikASPNETMVCVSExtensions
+  #    dependsOn:
+  #      - VisualStudio2022
+  #    directives:
+  #      description: Download and Install Visual Studio extension
+  #    settings:
+  #      GetScript: |
+  #        # not needed
+  #      TestScript: |
+  #        $extensionName = "TelerikInc.TelerikASPNETMVCVSExtensions"
+  #        $vsExtensionsPath = "$env:LOCALAPPDATA\Microsoft\VisualStudio"
+  #        $found = Get-ChildItem $vsExtensionsPath -Recurse extension.vsixmanifest | where-Object {Select-String -Path $_.FullName -Pattern $extensionName -Quiet}
+  #        if ($found){return $true} else {return $false}
+  #      SetScript: |
+  #        $url = "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/TelerikInc/vsextensions/ProgressTelerikASPNETMVCVSExtensions/2025.4.1330.203/vspackage"
+  #        $dest = "$env:temp\TelerikASPNETMVCVSExtensions.vsix"
+  #        Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
+  #        $arguments = @('/quiet', '/norepair', '/shutdownprocesses', $dest)
+  #        $vsixInstaller = 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\resources\app\ServiceHub\Services\Microsoft.VisualStudio.Setup.Service\vsixinstaller.exe'
+  #        Start-Process -FilePath $vsixInstaller -ArgumentList $arguments -Wait -PassThru
+  ########################################################################
+  # Powershell: Download & Install Visual Studio extension TelerikInc.ProgressTelerikASPNETCoreVSExtensions
+  ########################################################################
+  #  - resource: PSDscResources/Script
+  #    id: TelerikInc.ProgressTelerikASPNETCoreVSExtensions
+  #    dependsOn:
+  #      - VisualStudio2022
+  #    directives:
+  #      description: Download and Install Visual Studio extension
+  #    settings:
+  #      GetScript: |
+  #        # not needed
+  #      TestScript: |
+  #        $extensionName = "TelerikInc.ProgressTelerikASPNETCoreVSExtensions"
+  #        $vsExtensionsPath = "$env:LOCALAPPDATA\Microsoft\VisualStudio"
+  #        $found = Get-ChildItem $vsExtensionsPath -Recurse extension.vsixmanifest | where-Object {Select-String -Path $_.FullName -Pattern $extensionName -Quiet}
+  #        if ($found){return $true} else {return $false}
+  #      SetScript: |
+  #        $url = "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/TelerikInc/vsextensions/ProgressTelerikASPNETCoreVSExtensions/2025.4.1330.203/vspackage"
+  #        $dest = "$env:temp\ProgressTelerikASPNETCoreVSExtensions.vsix"
+  #        Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
+  #        $arguments = @('/quiet', '/norepair', '/shutdownprocesses', $dest)
+  #        $vsixInstaller = 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\resources\app\ServiceHub\Services\Microsoft.VisualStudio.Setup.Service\vsixinstaller.exe'
+  #        Start-Process -FilePath $vsixInstaller -ArgumentList $arguments -Wait -PassThru
+  ########################################################################
+  # Registry: Edge Extension whitelisting and forced install
+  ########################################################################
+    - resource: "xPSDesiredStateConfiguration/xRegistry"
+      directives:
+        description: "Block all extensions"
+      settings:
+        Key: "HKLM:\\Software\\Policies\\Microsoft\\Edge\\ExtensionInstallBlocklist"
+        ValueName: "1"
+        ValueData: "*"
+        ValueType: "String"    #String (REG_SZ) | Binary (REG_BINARY)| DWord (REG_DWORD) | QWord (REG_QWORD)| MultiString (REG_MULTI_SZ) | ExpandString (REG_EXPAND_SZ) 
+        Force: true
+        Ensure: "Present"
+    - resource: "xPSDesiredStateConfiguration/xRegistry"
+      directives:
+        description: "Allow Edge extension 'Vue.js devtools'"
+      settings:
+        Key: "HKLM:\\Software\\Policies\\Microsoft\\Edge\\ExtensionInstallAllowlist"
+        ValueName: "1"
+        ValueData: "nhdogjmejiglipccpnnnanhbledajbpd"
+        ValueType: "String"    #String (REG_SZ) | Binary (REG_BINARY)| DWord (REG_DWORD) | QWord (REG_QWORD)| MultiString (REG_MULTI_SZ) | ExpandString (REG_EXPAND_SZ) 
+        Force: true
+        Ensure: "Present"
+    - resource: "xPSDesiredStateConfiguration/xRegistry"
+      directives:
+        description: "Force install extension 'Vue.js'"
+      settings:
+        Key: "HKLM:\\Software\\Policies\\Microsoft\\Edge\\ExtensionInstallForcelist"
+        ValueName: "1"
+        ValueData: "nhdogjmejiglipccpnnnanhbledajbpd"
+        ValueType: "String"    #String (REG_SZ) | Binary (REG_BINARY)| DWord (REG_DWORD) | QWord (REG_QWORD)| MultiString (REG_MULTI_SZ) | ExpandString (REG_EXPAND_SZ) 
+        Force: true
+        Ensure: "Present"
+  ########################################################################
+  # Settings: Modify Hosts file
+  ########################################################################
+    - resource: NetworkingDsc/HostsFile
+      directives:
+        description: add/removes entries in hosts file
+      settings:
+        HostName: localhost
+        IPAddress: 127.0.0.1
+        Ensure: Present
+  ########################################################################
+  # Company Portal: WinZip
+  ########################################################################
+    # made available as packaged app via the Company Portal
+    # software is requestable via Self Service Portal
+    # https://kbcprod.service-now.com/bev2?id=sc_cat_item&sys_id=bf48fd5fdb6257c4658872b10f961916
+  configurationVersion: 0.2.0

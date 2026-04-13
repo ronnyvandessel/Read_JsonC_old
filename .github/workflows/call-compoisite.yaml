@@ -22,7 +22,7 @@ jobs:
         uses: RonnyVanDessel/composite_test_pws@main
         with:
           #path: Params.jsonc
-          path: config.yaml
+          path: DotNET_DSC 1_v4.winget
       - name: Result
         run: echo "Targets = ${{ steps.parse.outputs.targets_r0 }}"
              echo "Aantal Lijnen = ${{ steps.parse.outputs.lines_count }}"
