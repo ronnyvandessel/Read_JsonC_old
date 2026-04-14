@@ -16,20 +16,20 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: DNS test
-        shell: pwsh
-        run: |
-          Write-Host "Runner OS:"
-          systeminfo | Select-String "OS Name","OS Version"
+      # - name: DNS test
+      #   shell: pwsh
+      #   run: |
+      #     Write-Host "Runner OS:"
+      #     systeminfo | Select-String "OS Name","OS Version"
 
-          Write-Host "`nDNS resolution test:"
-          Resolve-DnsName api.github.com -ErrorAction Continue
+      #     Write-Host "`nDNS resolution test:"
+      #     Resolve-DnsName api.github.com -ErrorAction Continue
 
-          Write-Host "`nConnectivity test (TCP 443):"
-          Test-NetConnection api.github.com -Port 443
+      #     Write-Host "`nConnectivity test (TCP 443):"
+      #     Test-NetConnection api.github.com -Port 443
 
-          Write-Host "`nProxy environment variables:"
-          Get-ChildItem Env: | Where-Object Name -match 'PROXY'
+      #     Write-Host "`nProxy environment variables:"
+      #     Get-ChildItem Env: | Where-Object Name -match 'PROXY'
 
       - name: Parse config
         id: parse
