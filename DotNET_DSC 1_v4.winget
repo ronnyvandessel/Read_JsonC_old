@@ -142,13 +142,13 @@ properties:
   ########################################################################
   # Winget: Install Sysinternals Suite
   ########################################################################
-   - resource: Microsoft.WinGet.DSC/WinGetPackage
-     id: sysinternals
-     directives:
-       description: Install Sysinternals Suite
+    - resource: Microsoft.WinGet.DSC/WinGetPackage
+      id: sysinternals
+      directives:
+        description: Install Sysinternals Suite
      settings:
-       id: 9P7KNL5RWT25
-       source: msstore
+        id: 9P7KNL5RWT25
+        source: msstore
   ########################################################################
   # Winget: Install VS-Code & extensions
   ########################################################################
